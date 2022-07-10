@@ -17,7 +17,6 @@ class PlayerCacheService {
     const playerIds = this.players.map(player => player.id);
 
     if (playerIds.indexOf(player.id) < 0) this.players.push(player);
-    console.log(this.players);
   }
 
   removePlayer(playerId) {

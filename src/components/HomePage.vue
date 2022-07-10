@@ -2,32 +2,40 @@
   <div class="home-page">
     <canvas id="game"></canvas>
 
-    <div class="home-page__content">
+    <div v-if="!game" class="home-page__content">
       <div class="home-page__menu">
-<!--        <div class="home-page__board">-->
-<!--          <div class="home-page__board-title">Party</div>-->
-<!--        </div>-->
+        <template v-if="isAuthorized">
+          <div class="home-page__board">
+            <div class="home-page__board-title">Party</div>
+          </div>
 
-        <div class="home-page__board">
-          <div class="home-page__board-title">Login</div>
-          <form action="">
-            <div class="form-part">
-              <div class="input">
-                <input class="input__inner" type="text" placeholder="--> Enter Nickname Here <--">
+          <div class="home-page__board">
+            <div class="home-page__board-title">Players Online (0)</div>
+          </div>
+
+          <div class="button">
+            <button @click.prevent="playGame" class="button__inner">Play</button>
+          </div>
+        </template>
+
+        <template v-else>
+          <div v-if="!isAuthorized" class="home-page__board">
+            <div class="home-page__board-title">Login</div>
+            <form @submit.prevent="login" action="/login">
+              <div class="form-part">
+                <div class="input">
+                  <input v-model="nickname" class="input__inner" type="text" placeholder="==> Enter Nickname Here <==">
+                </div>
               </div>
-            </div>
 
-            <div>
-              <div class="button">
-                <button class="button__inner">Play</button>
+              <div>
+                <div class="button">
+                  <button type="submit" class="button__inner">Play</button>
+                </div>
               </div>
-            </div>
-          </form>
-        </div>
-
-<!--        <div class="home-page__board">-->
-<!--          <div class="home-page__board-title">Players Online (0)</div>-->
-<!--        </div>-->
+            </form>
+          </div>
+        </template>
       </div>
     </div>
   </div>
@@ -37,14 +45,36 @@
 export default {
   name: "HomePage",
   data() {
-    return {};
+    return {
+      game: false,
+      nickname: ''
+    };
+  },
+
+  computed: {
+    isAuthorized() {
+      return this.$store.getters['auth/isAuthorized'];
+    }
   },
 
   mounted() {
-    this.initGame();
+    // this.initGame();
   },
 
   methods: {
+    playGame() {
+      this.game = true;
+      setTimeout(() => {
+        this.initGame();
+      }, 200);
+    },
+
+    login() {
+      if (this.nickname.length < 1) return;
+
+      this.$store.dispatch('auth/login', this.nickname, {root: true});
+    },
+
     initGame() {
       const canvas = document.querySelector("#game");
       const ctx = canvas.getContext("2d");
@@ -177,7 +207,7 @@ export default {
           });
 
           enemies.push(enemy);
-        }, 10);
+        }, 1000);
       }
 
       function animate() {

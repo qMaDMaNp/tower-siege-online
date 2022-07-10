@@ -31,6 +31,12 @@ export default {
     margin: 0;
   }
 
+  ul,ol {
+    list-style-type: none;
+    padding: 0;
+    margin: 0;
+  }
+
   #app {
   }
 </style>

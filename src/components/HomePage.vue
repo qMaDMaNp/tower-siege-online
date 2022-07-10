@@ -5,16 +5,64 @@
     <div v-if="!game" class="home-page__content">
       <div class="home-page__menu">
         <template v-if="isAuthorized">
-          <div class="home-page__board">
-            <div class="home-page__board-title">Party</div>
-          </div>
+          <div>
+            <div style="display: flex; align-items: center; width: 100%;">
+              <div class="home-page__board">
+                <div class="home-page__board-title">Party</div>
+                <ul>
+                  <li v-for="player in players" v-if="player.id === currentPlayer.id" style="margin-bottom: 0.5rem;">
+                    <div class="" style="display: flex; align-items: center; justify-content: space-between;">
+                      <div style="display: flex; align-items: center;">
+                        <div style="width: 0.5rem; height: 0.5rem; background: lawngreen; border-radius: 999px; margin-right: 0.5rem;"></div>
+                        <div>{{ player.nickname }}</div>
+                      </div>
+                      <div style="display: flex; align-items: center; justify-content: space-between;">
+                        <div class="button" style="margin-right: 5px;">
+                          <button class="button__inner" style="font-size: 12px; padding: 0.25rem">Invite</button>
+                        </div>
 
-          <div class="home-page__board">
-            <div class="home-page__board-title">Players Online (0)</div>
-          </div>
+                        <div class="button">
+                          <button class="button__inner" style="font-size: 12px; padding: 0.25rem">Chat</button>
+                        </div>
+                      </div>
+                    </div>
+                  </li>
+                </ul>
+              </div>
 
-          <div class="button">
-            <button @click.prevent="playGame" class="button__inner">Play</button>
+              <div class="home-page__board">
+                <div class="home-page__board-title">Players Online ({{ players.length - 1 }})</div>
+                <ul>
+                  <li v-for="player in players" v-if="player.id !== currentPlayer.id" style="margin-bottom: 0.5rem;">
+                    <div class="" style="display: flex; align-items: center; justify-content: space-between;">
+                      <div style="display: flex; align-items: center;">
+                        <div style="width: 0.5rem; height: 0.5rem; background: lawngreen; border-radius: 999px; margin-right: 0.5rem;"></div>
+                        <div>{{ player.nickname }}</div>
+                      </div>
+                      <div style="display: flex; align-items: center; justify-content: space-between;">
+                        <div class="button" style="margin-right: 5px;">
+                          <button class="button__inner" style="font-size: 12px; padding: 0.25rem">Invite</button>
+                        </div>
+
+                        <div class="button">
+                          <button class="button__inner" style="font-size: 12px; padding: 0.25rem">Chat</button>
+                        </div>
+                      </div>
+                    </div>
+                  </li>
+                </ul>
+              </div>
+            </div>
+
+            <div>
+              <div class="button" style="margin-bottom: 0.5rem;">
+                <button class="button__inner">Play</button>
+              </div>
+
+              <div class="button">
+                <button @click.prevent="logout" type="submit" class="button__inner" style="background: #ef6f6f">Logout</button>
+              </div>
+            </div>
           </div>
         </template>
 
@@ -42,6 +90,8 @@
 </template>
 
 <script>
+import SocketController from "@/lib/SocketController";
+
 export default {
   name: "HomePage",
   data() {
@@ -54,25 +104,66 @@ export default {
   computed: {
     isAuthorized() {
       return this.$store.getters['auth/isAuthorized'];
+    },
+
+    players() {
+      return this.$store.state.players.players;
+    },
+
+    currentPlayer() {
+      return this.$store.getters["players/currentPlayer"];
+    }
+  },
+
+  created() {
+    if (this.isAuthorized) {
+      this.$store.dispatch('players/get_players', {}, {root: true})
+        .then(async () => {
+          await SocketController.connect();
+          this.initSocketListeners();
+        });
     }
   },
 
   mounted() {
-    // this.initGame();
+    this.initGame();
   },
 
   methods: {
-    playGame() {
-      this.game = true;
-      setTimeout(() => {
-        this.initGame();
-      }, 200);
+    initSocketListeners() {
+      SocketController.socket.on('message', (message) => {
+        console.log('hello');
+      });
+
+      // initGameSocketListeners
+      this.initPlayerSocketListeners();
     },
 
-    login() {
+    initGameSocketListeners() {
+      // SocketController.socket.on('game:some-event', (data) => {
+      // });
+    },
+
+    initPlayerSocketListeners() {
+      SocketController.socket.on('player:connect', (player) => {
+        this.$store.commit('players/ADD_PLAYER', player)
+      });
+
+      SocketController.socket.on('player:disconnect', (playerId) => {
+        this.$store.commit('players/REMOVE_PLAYER', playerId)
+      });
+    },
+
+    async login() {
       if (this.nickname.length < 1) return;
 
-      this.$store.dispatch('auth/login', this.nickname, {root: true});
+      await this.$store.dispatch('auth/login', this.nickname, {root: true});
+      location.href = '/';
+    },
+
+    logout() {
+      this.$store.commit('auth/REMOVE_CREDENTIALS');
+      location.href = '/';
     },
 
     initGame() {
@@ -207,7 +298,7 @@ export default {
           });
 
           enemies.push(enemy);
-        }, 1000);
+        }, 10);
       }
 
       function animate() {

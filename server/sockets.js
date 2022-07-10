@@ -1,5 +1,7 @@
 const jwt = require('jsonwebtoken');
 const path = require("path");
+const PlayerCacheService = require(path.resolve("server/services/PlayerCacheService"));
+const Player = require(path.resolve("server/entities/Player"));
 
 const io = require('socket.io')(null, {
       cors: { origin: "http://localhost:8080" }
@@ -16,13 +18,18 @@ io.use((socket, next) => {
         next(new Error('Authentication error'));
     }
 }).on('connection', (socket) => {
+    jwt.verify(socket.handshake.query.token, process.env.JWT_KEY, async (err, decoded) => {
+        const player = new Player(decoded.id, decoded.nickname);
+        PlayerCacheService.addPlayer(player);
+        io.emit('player:connect', player);
+    });
+
     socket.on("disconnect", () => {
         jwt.verify(socket.handshake.query.token, process.env.JWT_KEY, async (err, decoded) => {
             try {
                 if (err) throw ('Authentication error on socket disconnect');
-
-                //todo: add some ID here on disconnect
-                io.emit('player:disconnect');
+                PlayerCacheService.removePlayer(decoded.id);
+                io.emit('player:disconnect', decoded.id);
             }
             catch(e) {
                 console.error(e);

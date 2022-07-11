@@ -1,5 +1,7 @@
 # tower-siege-online
 
+[Demo](http://pavlo-pylypchuk.com/)
+
 ## Project setup
 ```
 npm install

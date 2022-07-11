@@ -12,8 +12,12 @@ class PlayerCollection {
     let token = '';
 
     try {
-      const player = await collection.findOne({ nickname: nickname.trim() });
-      if (!player) throw('User not found');
+      const query = { nickname: nickname.trim() };
+      let player = await collection.findOne(query);
+      if (!player) {
+        await collection.insertOne(query);
+        player = await collection.findOne(query);
+      }
 
       token = await jwt.sign({id: player._id, nickname: player.nickname}, process.env.JWT_KEY,{ expiresIn: '1d' });
 

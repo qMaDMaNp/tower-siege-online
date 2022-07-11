@@ -9,45 +9,70 @@ export default class Game {
     this.y = this.canvas.height / 2;
 
     this.animationId = null;
+    this.spawnEnemiesInterval = null;
+    this.spawnRatio = 1000;
+
+    this.player = null;
+    this.projectiles = [];
+    this.particles = [];
+    this.enemies = [];
+
+    this.addProjectileClick = this.addProjectile.bind(this);
+  }
+
+  start(spawnRatio) {
+    clearInterval(this.spawnEnemiesInterval);
+    cancelAnimationFrame(this.animationId);
+
+    this.spawnRatio = spawnRatio || 1000;
+
     this.player = new Player(this.ctx, this.x, this.y, 15, "white");
     this.projectiles = [];
     this.particles = [];
     this.enemies = [];
 
-    this.init();
-  }
-
-  init() {
     this.spawnEnemies();
     this.animate();
 
-    document.addEventListener("click", (e) => {
-      const angle = Math.atan2(
-        e.clientY - this.canvas.height / 2,
-        e.clientX - this.canvas.width / 2
-      );
-      const velocity = {
-        x: Math.cos(angle) * 4,
-        y: Math.sin(angle) * 4,
-      };
-      const projectile = new Projectile(
-        this.ctx,
-        this.canvas.width / 2,
-        this.canvas.height / 2,
-        5,
-        "white",
-        {
-          x: velocity.x,
-          y: velocity.y,
-        }
-      );
+    this.canvas.addEventListener("click", this.addProjectileClick);
+  }
 
-      this.projectiles.push(projectile);
-    });
+  end() {
+    cancelAnimationFrame(this.animationId);
+    clearInterval(this.spawnEnemiesInterval);
+
+    this.animationId = null;
+    this.spawnEnemiesInterval = null;
+
+    this.canvas.removeEventListener("click", this.addProjectileClick);
+  }
+
+  addProjectile(e) {
+    const angle = Math.atan2(
+      e.clientY - this.canvas.height / 2,
+      e.clientX - this.canvas.width / 2
+    );
+    const velocity = {
+      x: Math.cos(angle) * 4,
+      y: Math.sin(angle) * 4,
+    };
+    const projectile = new Projectile(
+      this.ctx,
+      this.canvas.width / 2,
+      this.canvas.height / 2,
+      5,
+      "white",
+      {
+        x: velocity.x,
+        y: velocity.y,
+      }
+    );
+
+    this.projectiles.push(projectile);
   }
 
   spawnEnemies() {
-    setInterval(() => {
+    this.spawnEnemiesInterval = setInterval(() => {
       const radius = Math.random() * (30 - 10) + 10;
       const color = `hsl(${Math.random() * 360}, 50%, 50%)`;
       let x = Math.random() * this.canvas.width;
@@ -69,7 +94,7 @@ export default class Game {
       });
 
       this.enemies.push(enemy);
-    }, 1000);
+    }, this.spawnRatio);
   }
 
   animate() {
@@ -110,7 +135,7 @@ export default class Game {
       const dist = Math.hypot(this.player.x - enemy.x, this.player.y - enemy.y);
 
       if (dist - enemy.radius - this.player.radius < 1) {
-        cancelAnimationFrame(this.animationId);
+        this.end();
       }
 
       //distance to projectile

@@ -2,7 +2,7 @@
   <div class="home-page">
     <canvas id="game"></canvas>
 
-    <div v-if="!game" class="home-page__content">
+    <div v-if="menu" class="home-page__content">
       <div class="home-page__menu">
         <template v-if="isAuthorized">
           <div>
@@ -52,7 +52,7 @@
 
             <div>
               <div class="button" style="margin-bottom: 0.5rem;">
-                <button class="button__inner">Play</button>
+                <button @click.prevent="startGame" class="button__inner">Play</button>
               </div>
 
               <div class="button">
@@ -93,7 +93,8 @@ export default {
   name: "HomePage",
   data() {
     return {
-      game: false,
+      menu: true,
+      game: null,
       nickname: ''
     };
   },
@@ -123,10 +124,16 @@ export default {
   },
 
   mounted() {
-    new Game();
+    this.game = new Game();
+    this.game.start(10);
   },
 
   methods: {
+    startGame() {
+      this.menu = false;
+      this.game.start();
+    },
+
     initSocketListeners() {
       SocketController.socket.on('message', (message) => {
         console.log('hello');

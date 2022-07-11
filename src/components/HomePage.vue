@@ -135,7 +135,6 @@
 import SocketController from "@/lib/SocketController";
 import Game from "@/lib/Game";
 import BackgroundGame from "@/lib/BackgroundGame";
-const axios = require('axios');
 
 export default {
   name: "HomePage",
@@ -165,13 +164,7 @@ export default {
   },
 
   created() {
-    if (this.isAuthorized) {
-      this.$store.dispatch('players/get_players', {}, {root: true})
-        .then(async () => {
-          await SocketController.connect();
-          this.initSocketListeners();
-        });
-    }
+    this.getInitialState();
   },
 
   mounted() {
@@ -179,6 +172,14 @@ export default {
   },
 
   methods: {
+    async getInitialState() {
+      if (!this.isAuthorized) return;
+
+      await this.$store.dispatch('players/get_players', {}, {root: true});
+      await SocketController.connect();
+      this.initSocketListeners();
+    },
+
     openMenu() {
       this.showScoreboard = false;
       this.showMenu = true;
@@ -239,9 +240,9 @@ export default {
     },
 
     initSocketListeners() {
-      SocketController.socket.on('message', (message) => {
-        console.log('hello');
-      });
+      // SocketController.socket.on('message', (message) => {
+      //   console.log('hello');
+      // });
 
       // initGameSocketListeners
       this.initPlayerSocketListeners();
@@ -266,12 +267,12 @@ export default {
       if (this.nickname.length < 1) return;
 
       await this.$store.dispatch('auth/login', this.nickname, {root: true});
-      location.href = '/';
+      await this.getInitialState();
     },
 
     logout() {
       this.$store.commit('auth/REMOVE_CREDENTIALS');
-      location.href = '/';
+      SocketController.socket.disconnect();
     }
   }
 };

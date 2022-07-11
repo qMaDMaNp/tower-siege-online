@@ -1,9 +1,11 @@
 const axios = require("axios");
 
-const headers = {
-  headers: {
-    'Authorization': window.localStorage.getItem('token')
-  }
+const headers = () => {
+  return {
+    headers: {
+      'Authorization': window.localStorage.getItem('token')
+    }
+  };
 };
 const origin = `http://${process.env.VUE_APP_ORIGIN}`;
 const prefix = "api";
@@ -21,5 +23,5 @@ exports.getAll = (query = {}) => {
   let params = Object.keys(query).length ? `?${new URLSearchParams(query).toString()}` : '';
 
   const url = routes.get.players + params;
-  return axios.get(url, headers);
+  return axios.get(url, headers());
 };

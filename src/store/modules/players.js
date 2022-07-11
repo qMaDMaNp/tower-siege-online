@@ -1,5 +1,5 @@
 import playersApi from "@/api/players";
-import {getObjectByKeyValue, getObjectIndexByKeyValue} from "@/lib/utils";
+import {getObjectIndexByKeyValue} from "@/lib/utils";
 
 const state = {
   players: []
@@ -12,12 +12,8 @@ const getters = {
 };
 
 const mutations = {
-  SET_PLAYERS(state, { players }) {
-    const playerIds = state.players.map(player => player.id);
-
-    players.forEach(player => {
-      if (playerIds.indexOf(player.id) < 0) state.players.push(player);
-    });
+  SET_PLAYERS(state, players) {
+    state.players = players;
   },
 
   ADD_PLAYER(state, player) {
@@ -33,13 +29,13 @@ const mutations = {
 
 const actions = {
   //Api calls
-  get_players({ commit, state }) {
+  get_players({ commit }) {
     return new Promise(async (resolve, reject) => {
       try {
         let playersResponse = await playersApi.getAll();
         let players = playersResponse.data;
 
-        commit('SET_PLAYERS', { players });
+        commit('SET_PLAYERS', players);
         resolve();
       }
       catch (e) {

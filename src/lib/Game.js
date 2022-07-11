@@ -148,6 +148,8 @@ export default class Game {
 
         //projectile touch
         if (dist - enemy.radius - projectile.radius < 1) {
+          this.canvas.dispatchEvent(new CustomEvent('game:projectile-hit'));
+
           for (let i = 0; i < 8; i++) {
             this.particles.push(
               new Particle(

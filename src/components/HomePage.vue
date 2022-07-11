@@ -2,6 +2,7 @@
   <div class="home-page">
     <canvas v-if="showMenu" id="background-game"></canvas>
     <canvas v-else id="game"></canvas>
+    <div style="position:fixed; top: 1rem; left: 50%; transform: translateX(-50%); color: rgba(255,255,255,0.71); font-size: 2rem; user-select: none;">{{ score }}</div>
 
     <div v-if="showMenu" class="home-page__content">
       <div class="home-page__menu">
@@ -51,13 +52,25 @@
               </div>
             </div>
 
-            <div>
-              <div class="button" style="margin-bottom: 0.5rem;">
-                <button @click.prevent="startGame" class="button__inner">Play</button>
+            <div class="">
+              <div style="display: flex; align-items: center; justify-content: center; margin-bottom: 0.5rem;">
+                <div style="max-width: 240px; width: 100%; margin-right: 0.5rem;">
+                  <div class="button">
+                    <button @click.prevent="startGame" class="button__inner">Play</button>
+                  </div>
+                </div>
+
+                <div style="max-width: 240px; width: 100%;">
+                  <div class="button">
+                    <button type="button" class="button__inner" disabled style="background: #b2b2b2" title="Under development">Play Online</button>
+                  </div>
+                </div>
               </div>
 
-              <div class="button">
-                <button @click.prevent="logout" type="submit" class="button__inner" style="background: #ef6f6f">Logout</button>
+              <div style="max-width: 240px; width: 100%; margin: 0 auto;">
+                <div class="button">
+                  <button @click="logout" type="button" class="button__inner" style="background: #ef6f6f">Logout</button>
+                </div>
               </div>
             </div>
           </div>
@@ -84,8 +97,36 @@
       </div>
     </div>
 
-    <div v-else-if="showScoreboard">
+    <div v-else-if="showScoreboard" class="home-page__content">
+      <div class="home-page__menu">
+        <div class="home-page__board" style="max-width: 500px; width: 100%;">
+          <div class="home-page__board-title">Scoreboard</div>
+          <div style="text-align: center">
+            <div class="">Who needs a scoreboard ?</div>
+            <div class="">We already know that</div>
+            <div style="font-size: 1.5rem; font-weight: 600; color: cornflowerblue;">YOU ARE THE BEST!</div>
+            <div class="">Here`s a fortune cookie for you</div>
 
+            <div style="display: flex; align-items: center; justify-content: center;">
+              <div style="max-width: 100px;">
+                <img src="../assets/cookie.svg" alt="Fortune cookie" style="width: 100%;">
+              </div>
+
+              <div>{{ getFortuneText() }}</div>
+            </div>
+
+            <div style="font-size: 10px; margin-bottom: 0.5rem;">
+              (Scoreboard will be implemented, but later)
+            </div>
+
+            <div style="max-width: 240px; text-align: center; margin: 0 auto;">
+              <div class="button">
+                <button @click="openMenu" type="button" class="button__inner">Menu</button>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
     </div>
   </div>
 </template>
@@ -94,6 +135,7 @@
 import SocketController from "@/lib/SocketController";
 import Game from "@/lib/Game";
 import BackgroundGame from "@/lib/BackgroundGame";
+const axios = require('axios');
 
 export default {
   name: "HomePage",
@@ -103,7 +145,8 @@ export default {
       showScoreboard: false,
       backgroundGame: null,
       game: null,
-      nickname: ''
+      nickname: '',
+      score: 0
     };
   },
 
@@ -136,6 +179,34 @@ export default {
   },
 
   methods: {
+    openMenu() {
+      this.showScoreboard = false;
+      this.showMenu = true;
+      this.$nextTick(this.initBackground);
+    },
+
+    getFortuneText() {
+      let fortunes = [
+        "A cynic is only a frustrated optimist.",
+        "We don't know the future, but here's a cookie.",
+        "The road to riches is paved with homework.",
+        "He who laughs at himself never runs out of things to laugh at.",
+        "Avoid taking unnecessary gambles. Lucky numbers: 13, 15, 23",
+        "That wasn't chicken.",
+        "All fortunes are wrong except this one.",
+        "Don't forget you are always on our minds.",
+        "Don't eat the paper.",
+        "You have rice in your teeth.",
+        "Ask your mom instead of a cookie.",
+        "This cookie contains 117 calories.",
+        "You think it's a secret, but they know.",
+        "Do not mistake temptation for opportunity.",
+        "A good developer, is a developer who adds cookie to the scoreboard."
+      ];
+
+      return fortunes[Math.floor(Math.random() * (14 - 0 + 1) + 0)];
+    },
+
     initBackground() {
       this.backgroundGame = new BackgroundGame();
       this.backgroundGame.start(10);
@@ -151,15 +222,20 @@ export default {
       this.$nextTick(() => {
         this.game = new Game();
         this.game.canvas.addEventListener('game:end', this.endGameHandler);
+        this.game.canvas.addEventListener('game:projectile-hit', this.projectileHitHandler);
         this.game.start();
       })
     },
 
     endGameHandler(e) {
       this.game.canvas.removeEventListener('game:end', this.endGameHandler);
-      this.showMenu = true;
+      this.game.canvas.removeEventListener('game:projectile-hit', this.projectileHitHandler);
+      this.showScoreboard = true;
+      this.score = 0;
+    },
 
-      this.$nextTick(this.initBackground);
+    projectileHitHandler(e) {
+      this.score += 10;
     },
 
     initSocketListeners() {

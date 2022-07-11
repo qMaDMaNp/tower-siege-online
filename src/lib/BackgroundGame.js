@@ -1,6 +1,6 @@
-export default class Game {
+export default class BackgroundGame {
   constructor() {
-    this.canvas = document.querySelector("#game");
+    this.canvas = document.querySelector("#background-game");
     this.ctx = this.canvas.getContext("2d");
 
     this.canvas.width = window.innerWidth;
@@ -10,23 +10,17 @@ export default class Game {
 
     this.animationId = null;
     this.spawnEnemiesInterval = null;
-    this.spawnRatio = 1000;
+    this.spawnRatio = 10;
 
     this.player = null;
     this.projectiles = [];
     this.particles = [];
     this.enemies = [];
-
-    this.addProjectileClick = this.addProjectile.bind(this);
   }
 
-  start(spawnRatio) {
-    this.canvas.dispatchEvent(new CustomEvent('game:start'));
-
+  start() {
     clearInterval(this.spawnEnemiesInterval);
     cancelAnimationFrame(this.animationId);
-
-    this.spawnRatio = spawnRatio || 1000;
 
     this.player = new Player(this.ctx, this.x, this.y, 15, "white");
     this.projectiles = [];
@@ -35,44 +29,14 @@ export default class Game {
 
     this.spawnEnemies();
     this.animate();
-
-    this.canvas.addEventListener("click", this.addProjectileClick);
   }
 
   end() {
-    this.canvas.dispatchEvent(new CustomEvent('game:end', { detail: { start: true } }));
-
     cancelAnimationFrame(this.animationId);
     clearInterval(this.spawnEnemiesInterval);
 
     this.animationId = null;
     this.spawnEnemiesInterval = null;
-
-    this.canvas.removeEventListener("click", this.addProjectileClick);
-  }
-
-  addProjectile(e) {
-    const angle = Math.atan2(
-      e.clientY - this.canvas.height / 2,
-      e.clientX - this.canvas.width / 2
-    );
-    const velocity = {
-      x: Math.cos(angle) * 4,
-      y: Math.sin(angle) * 4,
-    };
-    const projectile = new Projectile(
-      this.ctx,
-      this.canvas.width / 2,
-      this.canvas.height / 2,
-      5,
-      "white",
-      {
-        x: velocity.x,
-        y: velocity.y,
-      }
-    );
-
-    this.projectiles.push(projectile);
   }
 
   spawnEnemies() {

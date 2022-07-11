@@ -1,8 +1,9 @@
 <template>
   <div class="home-page">
-    <canvas id="game"></canvas>
+    <canvas v-if="showMenu" id="background-game"></canvas>
+    <canvas v-else id="game"></canvas>
 
-    <div v-if="menu" class="home-page__content">
+    <div v-if="showMenu" class="home-page__content">
       <div class="home-page__menu">
         <template v-if="isAuthorized">
           <div>
@@ -16,11 +17,11 @@
                         <div style="width: 0.5rem; height: 0.5rem; background: lawngreen; border-radius: 999px; margin-right: 0.5rem;"></div>
                         <div>{{ player.nickname }}</div>
                       </div>
-                      <div style="display: flex; align-items: center; justify-content: space-between;">
-                        <div class="button">
-                          <button class="button__inner" style="font-size: 12px; padding: 0.25rem 0.5rem; border: 1px solid #fff; background: transparent; color: #ef6f6f">Leave</button>
-                        </div>
-                      </div>
+<!--                      <div style="display: flex; align-items: center; justify-content: space-between;">-->
+<!--                        <div class="button">-->
+<!--                          <button class="button__inner" style="font-size: 12px; padding: 0.25rem 0.5rem; border: 1px solid #fff; background: transparent; color: #ef6f6f">Leave</button>-->
+<!--                        </div>-->
+<!--                      </div>-->
                     </div>
                   </li>
                 </ul>
@@ -82,18 +83,25 @@
         </template>
       </div>
     </div>
+
+    <div v-else-if="showScoreboard">
+
+    </div>
   </div>
 </template>
 
 <script>
 import SocketController from "@/lib/SocketController";
 import Game from "@/lib/Game";
+import BackgroundGame from "@/lib/BackgroundGame";
 
 export default {
   name: "HomePage",
   data() {
     return {
-      menu: true,
+      showMenu: true,
+      showScoreboard: false,
+      backgroundGame: null,
       game: null,
       nickname: ''
     };
@@ -124,14 +132,34 @@ export default {
   },
 
   mounted() {
-    this.game = new Game();
-    this.game.start(10);
+    this.initBackground();
   },
 
   methods: {
+    initBackground() {
+      this.backgroundGame = new BackgroundGame();
+      this.backgroundGame.start(10);
+    },
+
     startGame() {
-      this.menu = false;
-      this.game.start();
+      this.showMenu = false;
+      if (this.backgroundGame) {
+        this.backgroundGame.end();
+        this.backgroundGame = null;
+      }
+
+      this.$nextTick(() => {
+        this.game = new Game();
+        this.game.canvas.addEventListener('game:end', this.endGameHandler);
+        this.game.start();
+      })
+    },
+
+    endGameHandler(e) {
+      this.game.canvas.removeEventListener('game:end', this.endGameHandler);
+      this.showMenu = true;
+
+      this.$nextTick(this.initBackground);
     },
 
     initSocketListeners() {

@@ -211,7 +211,7 @@ export default {
         this.game = new Game();
         this.game.canvas.addEventListener('game:end', this.endGameHandler);
         this.game.canvas.addEventListener('game:projectile-hit', this.projectileHitHandler);
-        this.game.start();
+        this.game.start(600, [{color: 'red'}, {color: 'yellow'}]);
       })
     },
 
